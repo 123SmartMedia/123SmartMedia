@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import type { Lead } from '@/lib/supabase';
+import { createAdminClient } from '@/lib/supabase/server';
 
-// Use the service-role key server-side so RLS doesn't block inserts
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Missing Supabase server env vars');
-  return createClient(url, key);
+interface LeadPayload {
+  name: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  service: string;
+  message?: string;
+  smsConsent?: boolean;
 }
 
-async function sendTwilioSms(lead: Lead) {
+async function sendTwilioSms(lead: LeadPayload) {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
@@ -22,10 +23,11 @@ async function sendTwilioSms(lead: Lead) {
   }
 
   const body = [
-    `🔔 New Lead — ${lead.name}`,
+    `🔔 New Lead — ${lead.name} (${lead.businessName})`,
     `📞 ${lead.phone}`,
     `✉️  ${lead.email}`,
     `🛠  Service: ${lead.service}`,
+    lead.smsConsent ? '✅ SMS consent given' : '',
     lead.message ? `💬 "${lead.message}"` : '',
   ]
     .filter(Boolean)
@@ -43,20 +45,13 @@ async function sendTwilioSms(lead: Lead) {
     }
   );
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error('Twilio error:', text);
-  }
+  if (!res.ok) console.error('Twilio error:', await res.text());
 }
 
-async function sendSendGridConfirmation(lead: Lead) {
+async function sendSendGridConfirmation(lead: LeadPayload) {
   const apiKey = process.env.SENDGRID_API_KEY;
   const fromEmail = process.env.SENDGRID_FROM_EMAIL ?? 'noreply@123smartmedia.com';
-
-  if (!apiKey) {
-    console.warn('SENDGRID_API_KEY not configured — skipping confirmation email');
-    return;
-  }
+  if (!apiKey) { console.warn('SENDGRID_API_KEY not set — skipping email'); return; }
 
   const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
@@ -68,7 +63,7 @@ async function sendSendGridConfirmation(lead: Lead) {
       personalizations: [
         {
           to: [{ email: lead.email, name: lead.name }],
-          subject: "We received your request — 123 Smart Media",
+          subject: 'We received your request — 123 Smart Media',
         },
       ],
       from: { email: fromEmail, name: '123 Smart Media' },
@@ -77,9 +72,10 @@ async function sendSendGridConfirmation(lead: Lead) {
           type: 'text/html',
           value: `
             <p>Hi ${lead.name},</p>
-            <p>Thanks for reaching out! We received your request about <strong>${lead.service}</strong>
-            and will be in touch within 1 business day.</p>
-            <p>In the meantime, feel free to call us directly.</p>
+            <p>Thanks for reaching out! We received your request about
+            <strong>${lead.service}</strong> for <strong>${lead.businessName}</strong>
+            and will send a custom demo preview within 24 hours.</p>
+            ${lead.smsConsent ? '<p>You\'ve also opted in to receive SMS updates. Reply STOP to any text to opt out.</p>' : ''}
             <br/>
             <p>— The 123 Smart Media Team</p>
           `,
@@ -88,16 +84,12 @@ async function sendSendGridConfirmation(lead: Lead) {
     }),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error('SendGrid error:', text);
-  }
+  if (!res.ok) console.error('SendGrid error:', await res.text());
 }
 
-async function notifyMakeWebhook(lead: Lead) {
+async function notifyMakeWebhook(lead: LeadPayload) {
   const webhookUrl = process.env.MAKE_WEBHOOK_URL;
   if (!webhookUrl) return;
-
   await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -107,36 +99,48 @@ async function notifyMakeWebhook(lead: Lead) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, phone, service, message } = body as Partial<Lead>;
+    const body = await request.json() as Partial<LeadPayload>;
+    const { name, businessName, email, phone, service, message, smsConsent } = body;
 
-    // Basic server-side validation
-    if (!name || !email || !phone || !service) {
+    if (!name || !businessName || !email || !phone || !service) {
       return NextResponse.json(
-        { error: 'name, email, phone, and service are required' },
+        { error: 'name, businessName, email, phone, and service are required' },
         { status: 400 }
       );
     }
 
-    // Sanitise — only allow expected fields
-    const lead: Lead = {
+    const lead: LeadPayload = {
       name: String(name).slice(0, 120),
+      businessName: String(businessName).slice(0, 120),
       email: String(email).slice(0, 254),
       phone: String(phone).slice(0, 30),
       service: String(service).slice(0, 120),
-      message: message ? String(message).slice(0, 1000) : '',
-      source: 'website-contact-form',
+      message: message ? String(message).slice(0, 1000) : undefined,
+      smsConsent: Boolean(smsConsent),
     };
 
-    // 1. Persist to Supabase
-    const supabase = getSupabaseAdmin();
-    const { error: dbError } = await supabase.from('leads').insert(lead);
+    // Persist to contact_submissions table
+    const supabase = createAdminClient();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+
+    const { error: dbError } = await supabase.from('contact_submissions').insert({
+      name: lead.name,
+      business_name: lead.businessName,
+      email: lead.email,
+      phone: lead.phone,
+      service_interest: [lead.service],
+      message: lead.message ?? null,
+      sms_consent: lead.smsConsent ?? false,
+      ip_address: ip,
+      status: 'new',
+    });
+
     if (dbError) {
       console.error('Supabase insert error:', dbError);
-      return NextResponse.json({ error: 'Failed to save lead' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
     }
 
-    // 2. Fire notifications concurrently — failures are non-fatal
+    // Fire notifications concurrently — failures are non-fatal
     await Promise.allSettled([
       sendTwilioSms(lead),
       sendSendGridConfirmation(lead),
@@ -145,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {
-    console.error('Lead API error:', err);
+    console.error('Leads API error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
