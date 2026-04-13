@@ -3,8 +3,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import SiteHeader from '@/components/ui/SiteHeader';
 import MobileStickyNav from '@/components/ui/MobileStickyNav';
+import Footer from '@/components/shared/Footer';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SiteHeader />
         <main>{children}</main>
+        <Footer />
         {/*
           MobileStickyNav renders as a fixed bottom bar on viewports < md.
           It provides one-tap Call and Book actions on every page.

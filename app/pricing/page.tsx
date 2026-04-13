@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck, ChevronDown } from 'lucide-react';
 
 const tiers = [
   {
@@ -20,6 +21,10 @@ const tiers = [
     ],
     cta: 'Get Started',
     highlight: false,
+    addons: [
+      { name: 'AI Chatbot', price: 99, description: '24/7 lead capture & FAQ bot' },
+      { name: 'SMS Text-Back', price: 49, description: 'Auto-text missed callers within 60s' },
+    ],
   },
   {
     name: 'Growth',
@@ -36,6 +41,11 @@ const tiers = [
     ],
     cta: 'Most Popular — Get Started',
     highlight: true,
+    addons: [
+      { name: 'AI Receptionist', price: 149, description: 'Answers, qualifies & books calls 24/7' },
+      { name: 'Email Automation', price: 79, description: 'Drip sequences + review requests' },
+      { name: 'Social Automation', price: 99, description: 'Auto-post to Facebook & Instagram' },
+    ],
   },
   {
     name: 'Elite',
@@ -52,8 +62,78 @@ const tiers = [
     ],
     cta: 'Talk to Sales',
     highlight: false,
+    addons: [
+      { name: 'White-Label Reports', price: 199, description: 'Branded monthly reports for your clients' },
+      { name: 'Custom CRM Build', price: 299, description: 'Tailored pipeline & automation workflows' },
+    ],
   },
 ];
+
+function AddonsAccordion({
+  addons,
+  highlight,
+}: {
+  addons: { name: string; price: number; description: string }[];
+  highlight: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className={['mt-6 rounded-xl border', highlight ? 'border-white/20' : 'border-gray-200'].join(' ')}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={[
+          'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors',
+          highlight
+            ? 'text-blue-100 hover:bg-white/10'
+            : 'text-gray-700 hover:bg-gray-50',
+        ].join(' ')}
+        aria-expanded={open}
+      >
+        <span>AI Add-Ons Available</span>
+        <ChevronDown
+          className={['h-4 w-4 transition-transform', open ? 'rotate-180' : ''].join(' ')}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="addons"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <ul className="space-y-2 px-4 pb-4">
+              {addons.map(({ name, price, description }) => (
+                <li key={name} className="flex items-start justify-between gap-4 text-sm">
+                  <div>
+                    <p className={['font-medium', highlight ? 'text-white' : 'text-gray-800'].join(' ')}>
+                      {name}
+                    </p>
+                    <p className={highlight ? 'text-blue-200 text-xs' : 'text-gray-500 text-xs'}>
+                      {description}
+                    </p>
+                  </div>
+                  <span
+                    className={[
+                      'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold',
+                      highlight ? 'bg-white/20 text-white' : 'bg-brand/10 text-brand',
+                    ].join(' ')}
+                  >
+                    +${price}/mo
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
@@ -73,9 +153,7 @@ export default function PricingPage() {
             onClick={() => setAnnual(false)}
             className={[
               'rounded-full px-5 py-2 text-sm font-semibold transition-all',
-              !annual
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700',
+              !annual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
             ].join(' ')}
           >
             Monthly
@@ -84,9 +162,7 @@ export default function PricingPage() {
             onClick={() => setAnnual(true)}
             className={[
               'rounded-full px-5 py-2 text-sm font-semibold transition-all',
-              annual
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700',
+              annual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
             ].join(' ')}
           >
             Annual
@@ -99,11 +175,14 @@ export default function PricingPage() {
 
       {/* Tier cards */}
       <div className="mt-12 grid gap-8 lg:grid-cols-3">
-        {tiers.map(({ name, monthlyPrice, annualPrice, description, features, cta, highlight }) => {
+        {tiers.map(({ name, monthlyPrice, annualPrice, description, features, cta, highlight, addons }, i) => {
           const price = annual ? annualPrice : monthlyPrice;
           return (
-            <div
+            <motion.div
               key={name}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
               className={[
                 'relative flex flex-col rounded-2xl border p-8',
                 highlight
@@ -123,7 +202,14 @@ export default function PricingPage() {
               </p>
 
               <div className="mt-6 flex items-end gap-1">
-                <span className="text-4xl font-extrabold">${price}</span>
+                <motion.span
+                  key={`${name}-${price}`}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-4xl font-extrabold"
+                >
+                  ${price}
+                </motion.span>
                 <span className={['mb-1 text-sm', highlight ? 'text-blue-200' : 'text-gray-400'].join(' ')}>
                   /mo{annual ? ' (billed annually)' : ''}
                 </span>
@@ -138,18 +224,21 @@ export default function PricingPage() {
                 ))}
               </ul>
 
+              {/* AI Add-Ons accordion */}
+              <AddonsAccordion addons={addons} highlight={highlight} />
+
               <Link
                 href="/contact"
                 className={[
-                  'mt-8 rounded-xl px-5 py-3 text-center text-sm font-bold transition-colors',
+                  'mt-6 rounded-xl px-5 py-3 text-center text-sm font-bold transition-all',
                   highlight
-                    ? 'bg-white text-brand hover:bg-blue-50'
-                    : 'bg-brand text-white hover:bg-brand-dark',
+                    ? 'bg-white text-brand hover:bg-blue-50 hover:shadow-md'
+                    : 'bg-brand text-white hover:bg-brand-dark hover:shadow-md',
                 ].join(' ')}
               >
                 {cta}
               </Link>
-            </div>
+            </motion.div>
           );
         })}
       </div>

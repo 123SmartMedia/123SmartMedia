@@ -1,11 +1,180 @@
-import type { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
-import { ShieldCheck, Star, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShieldCheck, Star, MapPin, TrendingUp, Users, Zap, Bell } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-export const metadata: Metadata = {
-  title: 'Websites That Book Jobs For You',
-};
+// ─── Animated counter hook ────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1800) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
 
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const tick = (now: number) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            setValue(Math.round(ease * target));
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return { value, ref };
+}
+
+// ─── Stats counter widget ─────────────────────────────────────────────────────
+function StatCounter({
+  target,
+  suffix,
+  label,
+}: {
+  target: number;
+  suffix: string;
+  label: string;
+}) {
+  const { value, ref } = useCountUp(target);
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span ref={ref} className="text-3xl font-extrabold text-white">
+        {value.toLocaleString()}
+        {suffix}
+      </span>
+      <span className="text-sm text-blue-200">{label}</span>
+    </div>
+  );
+}
+
+// ─── Dashboard preview mockup ─────────────────────────────────────────────────
+function DashboardMockup() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.7, ease: 'easeOut' }}
+      className="mx-auto mt-20 max-w-4xl"
+    >
+      <p className="mb-6 text-center text-sm font-semibold uppercase tracking-widest text-blue-300">
+        Your Client Dashboard Preview
+      </p>
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        transition={{ type: 'spring', stiffness: 200 }}
+        className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm shadow-2xl"
+      >
+        {/* Mock browser chrome */}
+        <div className="flex items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-3">
+          <span className="h-3 w-3 rounded-full bg-red-400/60" />
+          <span className="h-3 w-3 rounded-full bg-yellow-400/60" />
+          <span className="h-3 w-3 rounded-full bg-green-400/60" />
+          <div className="ml-3 flex-1 rounded bg-white/10 px-3 py-1 text-xs text-white/40">
+            dashboard.123smartmedia.com
+          </div>
+        </div>
+
+        {/* Mock dashboard content */}
+        <div className="grid gap-4 p-6 sm:grid-cols-3">
+          {/* Stat card: Live site */}
+          <motion.div
+            whileHover={{ y: -4 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="rounded-xl bg-white/10 p-4"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-blue-200">
+                Site Status
+              </span>
+              <span className="flex h-2 w-2 items-center justify-center">
+                <span className="absolute inline-flex h-2 w-2 animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-white">Live ✓</p>
+            <p className="mt-1 text-xs text-blue-300">98% uptime · SSL active</p>
+          </motion.div>
+
+          {/* Stat card: MRR */}
+          <motion.div
+            whileHover={{ y: -4 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="rounded-xl bg-white/10 p-4"
+          >
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-green-400" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-blue-200">
+                Monthly Revenue
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-bold text-white">$4,820</p>
+            <p className="mt-1 text-xs text-green-400">↑ 23% vs last month</p>
+          </motion.div>
+
+          {/* Stat card: AI tools */}
+          <motion.div
+            whileHover={{ y: -4 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="rounded-xl bg-white/10 p-4"
+          >
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-yellow-400" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-blue-200">
+                AI Tools Active
+              </span>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {['Chatbot', 'SMS Auto', 'Receptionist'].map((tool) => (
+                <div key={tool} className="flex items-center justify-between text-xs">
+                  <span className="text-white/80">{tool}</span>
+                  <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-green-400">
+                    ON
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Mock notification */}
+        <motion.div
+          initial={{ x: 40, opacity: 0 }}
+          whileInView={{ x: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="mx-6 mb-6 flex items-center gap-3 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3"
+        >
+          <Bell className="h-4 w-4 shrink-0 text-green-400" />
+          <div>
+            <p className="text-sm font-semibold text-white">New lead captured!</p>
+            <p className="text-xs text-green-300">
+              Mike R. — HVAC repair · 2 min ago · AI chatbot engaged
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <p className="mt-4 text-center text-xs text-blue-300/60">
+        Static preview — real data populates after onboarding
+      </p>
+    </motion.div>
+  );
+}
+
+// ─── Services grid ────────────────────────────────────────────────────────────
 const services = [
   {
     icon: '🌐',
@@ -29,67 +198,97 @@ const services = [
   },
 ];
 
-// LocalBusiness JSON-LD for SEO
-function LocalBusinessSchema() {
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: '123 Smart Media',
-    description: 'AI-powered digital marketing agency for home service businesses',
-    telephone: process.env.NEXT_PUBLIC_BUSINESS_PHONE ?? '(800) 123-7627',
-    url: 'https://123smartmedia.com',
-    priceRange: '$$',
-    areaServed: 'United States',
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
-  );
-}
-
+// ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   return (
     <>
-      <LocalBusinessSchema />
+      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      <section
+        id="hero"
+        className="relative overflow-hidden px-4 py-24 text-white sm:px-6 lg:px-8"
+        style={{
+          background:
+            'linear-gradient(135deg, #0040cc 0%, #0066FF 40%, #0a1a6e 70%, #0d0d2b 100%)',
+          backgroundSize: '200% 200%',
+          animation: 'gradientShift 10s ease infinite',
+        }}
+      >
+        {/* Decorative blobs */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl"
+        />
 
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand to-blue-800 px-4 py-20 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
+        <div className="relative mx-auto max-w-4xl text-center">
           {/* Trust badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm"
+          >
             <ShieldCheck className="h-4 w-4 text-green-300" />
-            Licensed &amp; Insured Agency
-          </div>
+            Licensed &amp; Insured · As seen serving Long Island &amp; beyond
+          </motion.div>
 
-          <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            We Build Websites That{' '}
-            <span className="text-accent">Book Jobs For You</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-blue-100">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
+          >
+            Free Website.{' '}
+            <span className="text-accent">No Upfront Cost.</span>
+            <br />
+            Grow with AI.
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mx-auto mt-6 max-w-2xl text-lg text-blue-100"
+          >
             AI-powered websites, chatbots, and automations that work around the clock
             — so you can focus on the job, not chasing leads.
-          </p>
+          </motion.p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link
-              href="/contact"
-              className="w-full rounded-xl bg-accent px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-accent-dark transition-colors sm:w-auto"
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+          >
+            <a
+              href="#contact-form"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="group w-full rounded-xl bg-accent px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-accent-dark hover:shadow-accent/30 hover:shadow-xl sm:w-auto"
             >
-              Get Your Free Site
-            </Link>
+              Claim My Free Website
+              <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
+            </a>
             <Link
-              href="/demo"
-              className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition-colors sm:w-auto"
+              href="/pricing"
+              className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
             >
-              See Live Demo
+              View Pricing
             </Link>
-          </div>
+          </motion.div>
 
           {/* Social proof strip */}
-          <div className="mt-12 flex flex-wrap justify-center gap-6 text-sm text-blue-200">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="mt-12 flex flex-wrap justify-center gap-6 text-sm text-blue-200"
+          >
             <span className="flex items-center gap-1.5">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               4.9/5 from 120+ clients
@@ -102,48 +301,105 @@ export default function HomePage() {
               <ShieldCheck className="h-4 w-4 text-green-300" />
               30-day money-back guarantee
             </span>
-          </div>
+          </motion.div>
+
+          {/* Stats counters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.6 }}
+            className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-8 border-t border-white/10 pt-10"
+          >
+            <StatCounter target={120} suffix="+" label="Clients served" />
+            <StatCounter target={4200} suffix="+" label="Leads captured" />
+            <StatCounter target={97} suffix="%" label="Client retention" />
+          </motion.div>
         </div>
+
+        {/* Dashboard mockup inside hero section */}
+        <DashboardMockup />
       </section>
 
-      {/* ── Services grid ─────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <h2 className="text-center text-3xl font-bold text-gray-900">
+      {/* ── Services grid ────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center text-3xl font-bold text-gray-900"
+        >
           Everything You Need to Dominate Local Search
-        </h2>
+        </motion.h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map(({ icon, title, description }) => (
-            <div
+          {services.map(({ icon, title, description }, i) => (
+            <motion.div
               key={title}
-              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,102,255,0.1)' }}
+              className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
             >
               <span className="text-3xl" aria-hidden="true">{icon}</span>
               <h3 className="mt-3 text-lg font-semibold text-gray-900">{title}</h3>
               <p className="mt-2 text-sm text-gray-600">{description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
         <div className="mt-10 text-center">
           <Link
             href="/services"
-            className="inline-flex rounded-lg border border-brand px-6 py-3 text-sm font-semibold text-brand hover:bg-brand hover:text-white transition-colors"
+            className="inline-flex rounded-lg border border-brand px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
           >
             View All Services →
           </Link>
         </div>
       </section>
 
-      {/* ── Trust bar ─────────────────────────────────────────── */}
+      {/* ── Trust bar ────────────────────────────────────────────────────────── */}
       <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-8 text-sm font-medium text-gray-600">
           <span className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-green-600" />
             Licensed &amp; Insured
           </span>
-          <span className="flex items-center gap-2">⭐ Google Partner</span>
+          <span className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-blue-500" />
+            Google Partner
+          </span>
           <span className="flex items-center gap-2">🔒 SOC 2 Compliant Hosting</span>
           <span className="flex items-center gap-2">🚀 Sites Live in 7 Days</span>
           <span className="flex items-center gap-2">💬 Dedicated Account Manager</span>
+          <span className="flex items-center gap-2">💳 No Contracts · Cancel Anytime</span>
+        </div>
+      </section>
+
+      {/* ── Inline contact CTA ───────────────────────────────────────────────── */}
+      <section
+        id="contact-form"
+        className="bg-brand px-4 py-16 text-white sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-2xl text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-extrabold"
+          >
+            Ready for a Free Website?
+          </motion.h2>
+          <p className="mt-4 text-blue-100">
+            No commitment. We&apos;ll send a custom demo preview within 24 hours.
+          </p>
+          <Link
+            href="/contact"
+            className="mt-8 inline-flex rounded-xl bg-white px-8 py-4 text-base font-bold text-brand shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl"
+          >
+            Get My Free Site Now →
+          </Link>
         </div>
       </section>
     </>
