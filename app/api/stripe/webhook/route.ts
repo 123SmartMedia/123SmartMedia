@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/config';
 import { handleStripeWebhook } from '@/lib/stripe/webhook-handler';
 
-// Must disable body parsing — Stripe requires the raw body for signature verification
-export const config = { api: { bodyParser: false } };
-
 export async function POST(request: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
