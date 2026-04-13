@@ -1,4 +1,4 @@
-import { stripe } from './config';
+import { getStripe } from './config';
 import { PLANS } from '@/lib/constants';
 
 interface CreateCheckoutOptions {
@@ -24,7 +24,7 @@ export async function createCheckoutSession({
     ...addonPriceIds.map((price) => ({ price, quantity: 1 })),
   ];
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: lineItems,
@@ -43,7 +43,7 @@ export async function createCheckoutSession({
 }
 
 export async function createBillingPortalSession(stripeCustomerId: string) {
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/billing`,
   });

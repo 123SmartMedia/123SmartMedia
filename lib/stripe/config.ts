@@ -1,8 +1,17 @@
 import Stripe from 'stripe';
 
-// Use an empty string fallback so the module loads during build without
-// throwing. Actual API calls will fail at runtime if the key is missing,
-// which is the correct behavior for a server-only secret.
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-  typescript: true,
-});
+// Lazily instantiated so the module loads cleanly at build time
+// without requiring STRIPE_SECRET_KEY to be present.
+let _stripe: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+    _stripe = new Stripe(key, { typescript: true });
+  }
+  return _stripe;
+}
+
+// Convenience re-export — use getStripe() in server code that runs at runtime
+export { getStripe as stripe };
