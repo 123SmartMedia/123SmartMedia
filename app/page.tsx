@@ -284,7 +284,7 @@ export default function HomePage() {
             className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium backdrop-blur-sm"
           >
             <ShieldCheck className="h-4 w-4 text-green-300" />
-            Licensed &amp; Insured · As seen serving Long Island &amp; beyond
+            U.S.-Based Team · 120+ Home Service Businesses Served
           </motion.div>
 
           <motion.h1
@@ -293,10 +293,10 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
           >
-            Free Website.{' '}
-            <span className="text-accent">No Upfront Cost.</span>
+            Make your website{' '}
+            <span className="text-accent">work as hard</span>
             <br />
-            Grow with AI.
+            as you do.
           </motion.h1>
 
           <motion.p
@@ -305,8 +305,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mt-6 max-w-2xl text-lg text-blue-100"
           >
-            AI-powered websites, chatbots, and automations that work around the clock
-            — so you can focus on the job, not chasing leads.
+            Done-for-you websites with unlimited edits and U.S.-based support — live in days.
           </motion.p>
 
           <motion.div
@@ -315,22 +314,18 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
           >
-            <a
-              href="#contact-form"
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById('contact-form')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+            <Link
+              href="/contact"
               className="group w-full rounded-xl bg-accent px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-accent-dark hover:shadow-accent/30 hover:shadow-xl sm:w-auto"
             >
-              Claim My Free Website
+              Book a Free Consultation
               <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
-            </a>
+            </Link>
             <Link
               href="/pricing"
               className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
             >
-              View Pricing
+              View Pricing — From $199/mo
             </Link>
           </motion.div>
 
@@ -515,17 +510,25 @@ export default function HomePage() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-extrabold"
           >
-            Ready for a Free Website?
+            Ready to Book More Jobs?
           </motion.h2>
           <p className="mt-4 text-blue-100">
-            No commitment. We&apos;ll send a custom demo preview within 24 hours.
+            Book a free 15-minute call. We&apos;ll show you exactly what your new site will look like — no commitment required.
           </p>
-          <Link
-            href="/contact"
-            className="mt-8 inline-flex rounded-xl bg-white px-8 py-4 text-base font-bold text-brand shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl"
-          >
-            Get My Free Site Now →
-          </Link>
+          <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Link
+              href="/contact"
+              className="w-full rounded-xl bg-white px-8 py-4 text-base font-bold text-brand shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl sm:w-auto"
+            >
+              Book a Free Consultation →
+            </Link>
+            <Link
+              href="/pricing"
+              className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
+            >
+              View Pricing
+            </Link>
+          </div>
         </div>
       </section>
     </>

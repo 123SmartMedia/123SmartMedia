@@ -3,21 +3,31 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import SiteHeader from '@/components/ui/SiteHeader';
 import MobileStickyNav from '@/components/ui/MobileStickyNav';
+import StickyBookButton from '@/components/ui/StickyBookButton';
 import Footer from '@/components/shared/Footer';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
-    default: '123 Smart Media | Websites That Book Jobs For You',
+    default: '123 Smart Media | Websites Built for Home Service Businesses',
     template: '%s | 123 Smart Media',
   },
   description:
-    'AI-powered websites, chatbots, SMS automation, and AI receptionists for home service businesses. Get more calls, more bookings, more revenue.',
+    'Done-for-you websites with unlimited edits and U.S.-based support — live in days. AI chatbots, SMS automation, and AI receptionists for contractors, HVAC, plumbing, landscaping, and more.',
+  keywords: [
+    'websites for home service businesses',
+    'contractor website design',
+    'HVAC website',
+    'plumber website',
+    'AI chatbot for contractors',
+    'SMS automation small business',
+  ],
   metadataBase: new URL('https://123smartmedia.com'),
   openGraph: {
     type: 'website',
     siteName: '123 Smart Media',
+    description: 'Done-for-you websites with unlimited edits and U.S.-based support — live in days.',
   },
 };
 
@@ -37,6 +47,7 @@ export default function RootLayout({
           It provides one-tap Call and Book actions on every page.
         */}
         <MobileStickyNav />
+        <StickyBookButton />
       </body>
     </html>
   );

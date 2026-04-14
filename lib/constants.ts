@@ -2,27 +2,28 @@
 // Replace price_* placeholders with real Stripe Price IDs from your dashboard.
 // Monthly + annual prices must be created as recurring prices in Stripe.
 
+// Annual pricing = 20% off monthly
 export const PLANS = {
   starter: {
     name: 'Starter',
-    monthlyPrice: 497,
-    annualPrice: 447,
+    monthlyPrice: 199,
+    annualPrice: 159,  // $199 × 0.80 = ~$159
     monthlyPriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID ?? 'price_starter_monthly',
     annualPriceId: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID ?? 'price_starter_annual',
     description: 'Perfect for contractors just getting started online.',
   },
   growth: {
     name: 'Growth',
-    monthlyPrice: 997,
-    annualPrice: 897,
+    monthlyPrice: 349,
+    annualPrice: 279,  // $349 × 0.80 = ~$279
     monthlyPriceId: process.env.STRIPE_GROWTH_MONTHLY_PRICE_ID ?? 'price_growth_monthly',
     annualPriceId: process.env.STRIPE_GROWTH_ANNUAL_PRICE_ID ?? 'price_growth_annual',
-    description: 'The full stack for businesses ready to scale leads.',
+    description: 'The complete growth stack for businesses ready to scale.',
   },
   elite: {
     name: 'Elite',
-    monthlyPrice: 1997,
-    annualPrice: 1797,
+    monthlyPrice: 499,
+    annualPrice: 399,  // $499 × 0.80 = ~$399
     monthlyPriceId: process.env.STRIPE_ELITE_MONTHLY_PRICE_ID ?? 'price_elite_monthly',
     annualPriceId: process.env.STRIPE_ELITE_ANNUAL_PRICE_ID ?? 'price_elite_annual',
     description: 'Full automation suite for established home service companies.',
