@@ -63,6 +63,13 @@ export const ADDONS = {
     priceId: process.env.STRIPE_ADDON_SOCIAL_PRICE_ID ?? 'price_addon_social',
     description: 'Auto-post to Facebook & Instagram',
   },
+  socialPageSetup: {
+    name: 'Social Media Business Page Setup',
+    price: 299,
+    oneTime: true,
+    priceId: process.env.STRIPE_ADDON_SOCIAL_PAGE_PRICE_ID ?? 'price_addon_social_page',
+    description: 'Professional setup of your business social profiles',
+  },
 } as const;
 
 // ─── SMS copy ─────────────────────────────────────────────────────────────────
