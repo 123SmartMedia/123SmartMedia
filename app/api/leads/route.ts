@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { sendLeadConfirmation, sendLeadAlert } from '@/lib/sendgrid/emails';
+import { sendSmsOptInConfirmation, sendLeadAlertSms } from '@/lib/twilio/sms';
+
+export const dynamic = 'force-dynamic';
 
 interface LeadPayload {
   name: string;
@@ -11,82 +15,6 @@ interface LeadPayload {
   smsConsent?: boolean;
 }
 
-async function sendTwilioSms(lead: LeadPayload) {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  const to = process.env.BUSINESS_OWNER_PHONE;
-
-  if (!sid || !token || !from || !to) {
-    console.warn('Twilio env vars not configured — skipping SMS');
-    return;
-  }
-
-  const body = [
-    `🔔 New Lead — ${lead.name} (${lead.businessName})`,
-    `📞 ${lead.phone}`,
-    `✉️  ${lead.email}`,
-    `🛠  Service: ${lead.service}`,
-    lead.smsConsent ? '✅ SMS consent given' : '',
-    lead.message ? `💬 "${lead.message}"` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const res = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({ From: from, To: to, Body: body }),
-    }
-  );
-
-  if (!res.ok) console.error('Twilio error:', await res.text());
-}
-
-async function sendSendGridConfirmation(lead: LeadPayload) {
-  const apiKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL ?? 'noreply@123smartmedia.com';
-  if (!apiKey) { console.warn('SENDGRID_API_KEY not set — skipping email'); return; }
-
-  const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      personalizations: [
-        {
-          to: [{ email: lead.email, name: lead.name }],
-          subject: 'We received your request — 123 Smart Media',
-        },
-      ],
-      from: { email: fromEmail, name: '123 Smart Media' },
-      content: [
-        {
-          type: 'text/html',
-          value: `
-            <p>Hi ${lead.name},</p>
-            <p>Thanks for reaching out! We received your request about
-            <strong>${lead.service}</strong> for <strong>${lead.businessName}</strong>
-            and will send a custom demo preview within 24 hours.</p>
-            ${lead.smsConsent ? '<p>You\'ve also opted in to receive SMS updates. Reply STOP to any text to opt out.</p>' : ''}
-            <br/>
-            <p>— The 123 Smart Media Team</p>
-          `,
-        },
-      ],
-    }),
-  });
-
-  if (!res.ok) console.error('SendGrid error:', await res.text());
-}
-
 async function notifyMakeWebhook(lead: LeadPayload) {
   const webhookUrl = process.env.MAKE_WEBHOOK_URL;
   if (!webhookUrl) return;
@@ -94,7 +22,7 @@ async function notifyMakeWebhook(lead: LeadPayload) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(lead),
-  }).catch((err) => console.error('Make.com webhook error:', err));
+  }).catch((err) => console.error('[Make.com] webhook error:', err));
 }
 
 export async function POST(request: NextRequest) {
@@ -119,7 +47,7 @@ export async function POST(request: NextRequest) {
       smsConsent: Boolean(smsConsent),
     };
 
-    // Persist to contact_submissions table
+    // Persist to contact_submissions
     const supabase = createAdminClient();
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
 
@@ -136,20 +64,52 @@ export async function POST(request: NextRequest) {
     });
 
     if (dbError) {
-      console.error('Supabase insert error:', dbError);
+      console.error('[Leads] Supabase insert error:', dbError);
       return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
     }
 
-    // Fire notifications concurrently — failures are non-fatal
+    // Fire all notifications concurrently — failures are non-fatal
     await Promise.allSettled([
-      sendTwilioSms(lead),
-      sendSendGridConfirmation(lead),
+      // Email: confirmation to prospect + internal alert to owner
+      sendLeadConfirmation({
+        name: lead.name,
+        businessName: lead.businessName,
+        email: lead.email,
+        service: lead.service,
+        smsConsent: lead.smsConsent,
+      }),
+      sendLeadAlert({
+        name: lead.name,
+        businessName: lead.businessName,
+        email: lead.email,
+        phone: lead.phone,
+        service: lead.service,
+        message: lead.message,
+        smsConsent: lead.smsConsent,
+      }),
+      // SMS: opt-in confirmation to prospect (only if they consented)
+      lead.smsConsent
+        ? sendSmsOptInConfirmation({
+            phone: lead.phone,
+            name: lead.name,
+            businessName: lead.businessName,
+          })
+        : Promise.resolve(),
+      // SMS: internal new-lead alert to business owner
+      sendLeadAlertSms({
+        name: lead.name,
+        businessName: lead.businessName,
+        phone: lead.phone,
+        service: lead.service,
+        smsConsent: lead.smsConsent,
+      }),
+      // Make.com automation webhook
       notifyMakeWebhook(lead),
     ]);
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {
-    console.error('Leads API error:', err);
+    console.error('[Leads] error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
