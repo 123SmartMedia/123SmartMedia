@@ -4,6 +4,12 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Star, MapPin, TrendingUp, Users, Zap, Bell, Quote } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import AIDemoModal from '@/components/AIDemoModal';
+import ClientLogos from '@/components/ClientLogos';
+import ExplainerVideo from '@/components/ExplainerVideo';
+import FAQSection from '@/components/FAQSection';
+import ExitIntentPopup from '@/components/ExitIntentPopup';
+import TrustBadges from '@/components/TrustBadges';
 
 // ─── Animated counter hook ────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1800) {
@@ -252,6 +258,8 @@ const services = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function HomePage() {
+  const [aiDemoOpen, setAiDemoOpen] = useState(false);
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
@@ -308,22 +316,49 @@ export default function HomePage() {
             Done-for-you websites with unlimited edits and U.S.-based support — live in days.
           </motion.p>
 
+          {/* Trust badges row */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25 }}
+            className="mt-6"
+          >
+            <TrustBadges />
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+            className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
           >
             <Link
               href="/contact"
+              data-cta-type="primary"
               className="group w-full rounded-xl bg-accent px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-accent-dark hover:shadow-accent/30 hover:shadow-xl sm:w-auto"
             >
               Book a Free Consultation
               <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
             </Link>
+            <button
+              onClick={() => setAiDemoOpen(true)}
+              data-cta-type="secondary"
+              className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
+            >
+              Watch AI Demo →
+            </button>
+          </motion.div>
+
+          {/* Secondary CTA: pricing */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-4"
+          >
             <Link
               href="/pricing"
-              className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
+              className="text-sm text-blue-200 underline-offset-2 hover:underline"
             >
               View Pricing — From $199/mo
             </Link>
@@ -357,15 +392,18 @@ export default function HomePage() {
             transition={{ duration: 0.7, delay: 0.6 }}
             className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-8 border-t border-white/10 pt-10"
           >
-            <StatCounter target={120} suffix="+" label="Clients served" />
-            <StatCounter target={4200} suffix="+" label="Leads captured" />
-            <StatCounter target={97} suffix="%" label="Client retention" />
+            <StatCounter target={120} suffix="+" label="Clients served since 2022" />
+            <StatCounter target={4200} suffix="+" label="Leads captured since 2023" />
+            <StatCounter target={97} suffix="%" label="Client retention rate" />
           </motion.div>
         </div>
 
         {/* Dashboard mockup inside hero section */}
         <DashboardMockup />
       </section>
+
+      {/* ── Client logos carousel ─────────────────────────────────────────────── */}
+      <ClientLogos />
 
       {/* ── Services grid ────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -404,6 +442,9 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* ── Explainer video ───────────────────────────────────────────────────── */}
+      <ExplainerVideo />
 
       {/* ── Testimonials ─────────────────────────────────────────────────────── */}
       <section className="bg-gray-50 px-4 py-20 sm:px-6 lg:px-8">
@@ -479,6 +520,9 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
+      <FAQSection />
+
       {/* ── Trust bar ────────────────────────────────────────────────────────── */}
       <section className="border-t border-gray-100 bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-8 text-sm font-medium text-gray-600">
@@ -518,12 +562,14 @@ export default function HomePage() {
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/contact"
+              data-cta-type="primary"
               className="w-full rounded-xl bg-white px-8 py-4 text-base font-bold text-brand shadow-lg transition-all hover:bg-blue-50 hover:shadow-xl sm:w-auto"
             >
               Book a Free Consultation →
             </Link>
             <Link
               href="/pricing"
+              data-cta-type="secondary"
               className="w-full rounded-xl border-2 border-white/40 bg-white/10 px-8 py-4 text-base font-semibold backdrop-blur-sm transition-all hover:bg-white/20 sm:w-auto"
             >
               View Pricing
@@ -531,6 +577,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Modals & global overlays ──────────────────────────────────────────── */}
+      <AIDemoModal open={aiDemoOpen} onClose={() => setAiDemoOpen(false)} />
+      <ExitIntentPopup />
     </>
   );
 }
