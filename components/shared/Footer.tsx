@@ -15,6 +15,7 @@ const navLinks = [
     heading: 'Company',
     links: [
       { label: 'Pricing', href: '/pricing' },
+      { label: 'Portfolio', href: '/portfolio' },
       { label: 'Live Demo', href: '/demo' },
       { label: 'Contact', href: '/contact' },
       { label: 'Privacy Policy', href: '/privacy-policy' },

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Star, MapPin, TrendingUp, Users, Zap, Bell } from 'lucide-react';
+import { ShieldCheck, Star, MapPin, TrendingUp, Users, Zap, Bell, Quote } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 // ─── Animated counter hook ────────────────────────────────────────────────────
@@ -173,6 +173,58 @@ function DashboardMockup() {
     </motion.div>
   );
 }
+
+// ─── Testimonials ─────────────────────────────────────────────────────────────
+const testimonials = [
+  {
+    quote: "We used to miss calls constantly. Now the AI books appointments while I'm on the roof. Best investment I've made.",
+    name: 'Brian T.',
+    title: 'Owner, Peak HVAC Services',
+    industry: 'HVAC',
+    rating: 5,
+    result: '+340% leads',
+  },
+  {
+    quote: "I was skeptical about AI but these guys made it dead simple. My phone stopped ringing with tire-kickers and started ringing with real customers.",
+    name: 'Marco D.',
+    title: 'Owner, GreenScape Landscaping',
+    industry: 'Landscaping',
+    rating: 5,
+    result: 'Booked 6 weeks out',
+  },
+  {
+    quote: "The AI receptionist paid for itself in the first week. It caught three emergency jobs on a Sunday I would have completely missed.",
+    name: 'Dave K.',
+    title: 'Owner, Reliable Plumbing Co.',
+    industry: 'Plumbing',
+    rating: 5,
+    result: '2x emergency calls',
+  },
+  {
+    quote: "I'd been in business 12 years and never had a website. Within two months I had more leads than I could handle. Wish I did this sooner.",
+    name: 'Tony R.',
+    title: 'Owner, Ironclad Masonry',
+    industry: 'Masonry',
+    rating: 5,
+    result: '$40k pipeline in 60 days',
+  },
+  {
+    quote: "Speed to lead is everything in remodeling. Our AI responds before the homeowner even finishes looking at a competitor's site.",
+    name: 'James A.',
+    title: 'Owner, Alpine General Contractors',
+    industry: 'Contracting',
+    rating: 5,
+    result: '41% higher close rate',
+  },
+  {
+    quote: "We used to basically hibernate from November to March. Now we're booking pool heater installs all winter. Game changer.",
+    name: 'Chris M.',
+    title: 'Owner, Suncoast Pool & Spa',
+    industry: 'Pool Services',
+    rating: 5,
+    result: '+38% off-season revenue',
+  },
+];
 
 // ─── Services grid ────────────────────────────────────────────────────────────
 const services = [
@@ -355,6 +407,80 @@ export default function HomePage() {
           >
             View All Services →
           </Link>
+        </div>
+      </section>
+
+      {/* ── Testimonials ─────────────────────────────────────────────────────── */}
+      <section className="bg-gray-50 px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <p className="text-sm font-semibold uppercase tracking-widest text-brand">
+              Client Stories
+            </p>
+            <h2 className="mt-2 text-3xl font-bold text-gray-900">
+              Real Results from Real Business Owners
+            </h2>
+            <div className="mt-2 flex items-center justify-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              ))}
+              <span className="ml-2 text-sm font-medium text-gray-600">4.9/5 from 120+ clients</span>
+            </div>
+          </motion.div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map(({ quote, name, title, industry, rating, result }, i) => (
+              <motion.div
+                key={name}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="relative flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+              >
+                <Quote className="h-6 w-6 text-brand/20" aria-hidden="true" />
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-gray-600">&ldquo;{quote}&rdquo;</p>
+
+                {/* Result badge */}
+                <span className="mt-4 inline-block self-start rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                  {result}
+                </span>
+
+                <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{name}</p>
+                    <p className="text-xs text-gray-500">{title}</p>
+                  </div>
+                  <div className="flex gap-0.5">
+                    {[...Array(rating)].map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-10 text-center"
+          >
+            <Link
+              href="/portfolio"
+              className="inline-flex rounded-lg border border-brand px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+            >
+              See Full Case Studies →
+            </Link>
+          </motion.div>
         </div>
       </section>
 
