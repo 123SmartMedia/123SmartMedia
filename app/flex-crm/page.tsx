@@ -190,7 +190,7 @@ export default function FlexCRMPage() {
             className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
           >
             <Link
-              href="/contact"
+              href="https://flex-crm-omega.vercel.app/auth/signup"
               data-cta-type="primary"
               className="group w-full rounded-xl bg-violet-600 px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-violet-700 hover:shadow-violet-500/30 hover:shadow-xl sm:w-auto"
             >
@@ -198,7 +198,7 @@ export default function FlexCRMPage() {
               <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
             </Link>
             <Link
-              href="/flex-crm/login"
+              href="https://flex-crm-omega.vercel.app/auth/login"
               className="w-full rounded-xl border border-gray-700 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 sm:w-auto"
             >
               Sign In →
@@ -456,7 +456,7 @@ export default function FlexCRMPage() {
                 </ul>
 
                 <Link
-                  href={name === 'Enterprise' ? '/contact' : '/contact'}
+                  href={name === 'Enterprise' ? '/contact' : 'https://flex-crm-omega.vercel.app/auth/signup'}
                   className={[
                     'block w-full rounded-xl py-3 text-center text-sm font-bold transition-all',
                     highlight
@@ -489,14 +489,14 @@ export default function FlexCRMPage() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/contact"
+              href="https://flex-crm-omega.vercel.app/auth/signup"
               data-cta-type="primary"
               className="w-full rounded-xl bg-violet-600 px-8 py-4 text-base font-bold text-white transition-all hover:bg-violet-700 sm:w-auto"
             >
               Start Free Trial →
             </Link>
             <Link
-              href="/flex-crm/login"
+              href="https://flex-crm-omega.vercel.app/auth/login"
               className="w-full rounded-xl border border-gray-700 px-8 py-4 text-base font-semibold text-white transition-all hover:bg-white/5 sm:w-auto"
             >
               Sign In
