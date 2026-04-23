@@ -12,6 +12,14 @@ const navLinks = [
     ],
   },
   {
+    heading: 'Products',
+    links: [
+      { label: 'FlexCRM', href: '/flex-crm' },
+      { label: 'FlexCRM Login', href: '/flex-crm/login' },
+      { label: 'FlexCRM Pricing', href: '/flex-crm#pricing' },
+    ],
+  },
+  {
     heading: 'Company',
     links: [
       { label: 'Pricing', href: '/pricing' },
@@ -30,9 +38,9 @@ export default function Footer() {
   return (
     <footer className="border-t border-gray-100 bg-gray-950 text-gray-400">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand col */}
-          <div className="sm:col-span-2 lg:col-span-1">
+          <div className="sm:col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 text-xl font-bold text-white">
               <span aria-hidden="true">⚡</span>
               <span>123 Smart Media</span>
