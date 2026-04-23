@@ -1,16 +1,16 @@
 # 123 Smart Media — Project Status
 
-**Last updated:** 2026-04-13  
-**Current branch:** `main`  
+**Last updated:** 2026-04-14  
+**Active branch:** `main` (commit directly — no feature branches needed)  
 **Repo:** [github.com/123SmartMedia/123SmartMedia](https://github.com/123SmartMedia/123SmartMedia)  
 **Vercel project:** `prj_WOgVbAkbJa6ZtiMEzBrnuA9XGaPK` (team `team_AEmQpVpQt7Krrcfo9xwDlcMI`)  
 **Supabase project:** `srumrljccqiuamivkupg`  
 
 ---
 
-## Overall Status: DEPLOYED — Pending Final Config
+## Overall Status: DEPLOYED — Pending Domain + 3rd-Party Config
 
-Production build is live. All Stripe/Supabase/auth code is in place. Remaining work is dashboard configuration (price IDs, webhook registration, custom domain).
+Production build is live. All code complete. Remaining work is mostly configuration tasks (domain, SendGrid, Twilio, Make.com) and one real Loom video URL swap.
 
 ---
 
@@ -21,7 +21,7 @@ Production build is live. All Stripe/Supabase/auth code is in place. Remaining w
 | Production | `123-smart-media-cz28tfo1z-123-smart-media.vercel.app` | READY |
 | Custom domain | `123smartmedia.com` | Not connected yet |
 
-**Last successful deploy:** `dpl_23QH8Q6Q9eznvEu9a8QiwtCfva6N` — commit `9ab6f8b`  
+**Last commit pushed to main:** `9fb8f3c` — CRO+SEO upgrade  
 **Build fix history:** next.config.ts → .mjs, removed Pages Router config export, Stripe lazy-init via `getStripe()`
 
 ---
@@ -36,10 +36,10 @@ Production build is live. All Stripe/Supabase/auth code is in place. Remaining w
 | Auth | Supabase Auth (magic link / PKCE) |
 | Database | Supabase PostgreSQL (RLS enabled) |
 | Payments | Stripe Checkout + Customer Portal + Webhooks |
-| Email | SendGrid (not wired up yet) |
-| SMS | Twilio (not wired up yet) |
+| Email | SendGrid (code complete, needs API key in Vercel) |
+| SMS | Twilio (code complete, needs credentials in Vercel) |
 | Hosting | Vercel |
-| Automation | Make.com (webhook trigger, not wired up yet) |
+| Automation | Make.com (not yet wired) |
 
 ---
 
@@ -47,11 +47,14 @@ Production build is live. All Stripe/Supabase/auth code is in place. Remaining w
 
 ```
 app/
-  page.tsx                          — Animated hero, stats counters, CTA → #contact-form
-  pricing/page.tsx                  — Plan cards + AI add-ons accordion
+  page.tsx                          — Hero, TrustBadges, ClientLogos, ExplainerVideo, FAQ, ExitIntentPopup
+  pricing/page.tsx                  — Plan cards + AI add-ons accordion + JSON-LD schema
   contact/page.tsx                  — Lead form with SMS consent + Zod validation
   login/page.tsx                    — Magic link login form
-  services/page.tsx                 — Services overview
+  services/page.tsx                 — Services overview with pricing
+  portfolio/page.tsx                — 6 case studies with metrics
+  privacy-policy/page.tsx           — Full policy with SMS opt-in/out language
+  terms/page.tsx                    — Full ToS: refund, cancel, asset export
   demo/page.tsx                     — Demo page
   (dashboard)/
     layout.tsx                      — Auth guard (redirects to /login if unauthenticated)
@@ -59,11 +62,11 @@ app/
     dashboard/billing/page.tsx      — Opens Stripe Customer Portal
     dashboard/settings/page.tsx     — Profile upsert (industry, SMS opt-in)
   api/
-    auth/callback/route.ts          — PKCE code exchange → /dashboard
+    auth/callback/route.ts          — PKCE code exchange → /dashboard (fires welcome email for new users)
     auth/signout/route.ts           — POST sign out → home
-    leads/route.ts                  — Contact form → contact_submissions table
+    leads/route.ts                  — Contact form → Supabase + SendGrid + Twilio (allSettled)
     stripe/checkout/route.ts        — POST → Stripe Checkout Session
-    stripe/webhook/route.ts         — Stripe webhook (signature verified)
+    stripe/webhook/route.ts         — Stripe webhook (signature verified, force-dynamic)
     stripe/portal/route.ts          — POST → Stripe Customer Portal session
 
 lib/
@@ -72,9 +75,19 @@ lib/
   stripe/config.ts                  — Lazy getStripe() (never instantiated at module load)
   stripe/checkout.ts                — createCheckoutSession, createBillingPortalSession
   stripe/webhook-handler.ts         — Handles subscription created/updated/deleted, invoice.payment_failed
-  constants.ts                      — PLANS, ADDONS, SMS_COPY, BUSINESS
+  sendgrid/emails.ts                — sendLeadConfirmation, sendLeadAlert, sendWelcomeEmail, sendSubscriptionConfirmation
+  twilio/sms.ts                     — sendSmsOptInConfirmation, sendLeadAlertSms, sendMissedCallTextBack, sendAppointmentReminder
+  constants.ts                      — PLANS, ADDONS, SMS_COPY, BUSINESS (all 12 Stripe price IDs)
 
 components/
+  StickyCTABar.tsx                  — Scroll-triggered sticky CTA, dismissible (localStorage 7-day TTL)
+  UrgencyBanner.tsx                 — Amber urgency banner, dismissible, shown on every page
+  TrustBadges.tsx                   — 6 trust badges shown in hero
+  AIDemoModal.tsx                   — Simulated AI chat demo modal
+  ClientLogos.tsx                   — Infinite-scroll client logo carousel
+  ExplainerVideo.tsx                — Dark section with lazy Loom iframe + transcript toggle
+  FAQSection.tsx                    — Accordion FAQ with FAQPage JSON-LD schema
+  ExitIntentPopup.tsx               — Exit-intent popup (desktop mouseleave + mobile popstate)
   dashboard/DashboardSidebar.tsx    — Desktop sidebar + mobile top bar
   shared/Footer.tsx                 — Dark footer with trust badges + SMS opt-out notice
   ui/MobileStickyNav.tsx            — Mobile sticky bottom nav
@@ -90,8 +103,6 @@ middleware.ts                       — Guards /dashboard routes, refreshes sess
 ---
 
 ## Database (Supabase `srumrljccqiuamivkupg`)
-
-All tables migrated with RLS enabled:
 
 | Table | Purpose | RLS |
 |---|---|---|
@@ -113,96 +124,69 @@ Trigger: `handle_new_user()` — auto-creates `profiles` row on signup.
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PUBLISHABLE_KEY`
+- All 12 Stripe price IDs (STARTER/GROWTH/ELITE × MONTHLY/ANNUAL + 5 add-ons)
 
 ### Still needed in Vercel
-- `STRIPE_STARTER_MONTHLY_PRICE_ID`
-- `STRIPE_STARTER_ANNUAL_PRICE_ID`
-- `STRIPE_GROWTH_MONTHLY_PRICE_ID`
-- `STRIPE_GROWTH_ANNUAL_PRICE_ID`
-- `STRIPE_ELITE_MONTHLY_PRICE_ID`
-- `STRIPE_ELITE_ANNUAL_PRICE_ID`
-- `STRIPE_ADDON_CHATBOT_PRICE_ID`
-- `STRIPE_ADDON_SMS_PRICE_ID`
-- `STRIPE_ADDON_RECEPTIONIST_PRICE_ID`
-- `STRIPE_ADDON_EMAIL_PRICE_ID`
-- `STRIPE_ADDON_SOCIAL_PRICE_ID`
+- `SENDGRID_API_KEY`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_NUMBER`
-- `SENDGRID_API_KEY`
-- `NEXT_PUBLIC_SITE_URL` (update to `https://123smartmedia.com` after domain connects)
+- `BUSINESS_OWNER_PHONE` (your phone — receives lead alert SMS)
+- `NEXT_PUBLIC_SITE_URL` (set to `https://123smartmedia.com` after domain connects)
 
 ---
 
 ## Checklist
 
 ### Infrastructure
-- [x] Next.js 14 App Router scaffolded
-- [x] Tailwind CSS + Framer Motion configured
-- [x] Vercel project connected to GitHub (`123SmartMedia/123SmartMedia`)
-- [x] Supabase project created (`srumrljccqiuamivkupg`)
-- [x] Production build passing (green)
+- [x] Vercel project connected to GitHub
+- [x] Production build passing
+- [x] Supabase project live with all tables + RLS
+- [x] Stripe products, prices, and webhook created
 - [ ] Custom domain `123smartmedia.com` connected to Vercel
 - [ ] SSL / DNS propagated
 
-### Auth & Database
-- [x] Supabase Auth (magic link) implemented
-- [x] PKCE callback route (`/api/auth/callback`)
-- [x] Sign out route
-- [x] Protected dashboard layout (redirects unauthenticated users)
-- [x] `profiles`, `subscriptions`, `ai_addons`, `contact_submissions` tables live
-- [x] RLS policies enabled
-- [x] Auto-profile trigger on signup
+### Code — Complete
+- [x] Full homepage with CRO components
+- [x] Pricing page (correct prices, JSON-LD, testimonials, FAQ)
+- [x] Services, Portfolio, Privacy Policy, Terms pages
+- [x] Contact form → Supabase + SendGrid + Twilio
+- [x] Auth (magic link, PKCE, protected dashboard)
+- [x] Stripe checkout + portal + webhook handler
+- [x] SendGrid email templates (lead confirm, lead alert, welcome, billing)
+- [x] Twilio SMS service (opt-in, lead alert, missed call, reminder)
+- [x] Full SEO metadata (OG, Twitter card, canonical, robots, JSON-LD on pricing + FAQ)
+- [x] 8 CRO components (StickyCTABar, UrgencyBanner, TrustBadges, AIDemoModal, ClientLogos, ExplainerVideo, FAQSection, ExitIntentPopup)
 
-### Stripe
-- [x] Checkout session API (`/api/stripe/checkout`)
-- [x] Customer Portal API (`/api/stripe/portal`)
-- [x] Webhook handler (subscription lifecycle + payment failed)
-- [x] Stripe SDK lazy-init fix (no build-time crash)
-- [ ] Products and prices created in Stripe dashboard
-- [ ] Stripe price IDs added to Vercel env vars
-- [ ] Webhook endpoint registered in Stripe dashboard (`/api/stripe/webhook`)
-- [ ] Webhook events: `customer.subscription.*`, `invoice.payment_failed`, `checkout.session.completed`
-
-### Pages / UI
-- [x] Animated hero with stats counters
-- [x] Pricing page with plan cards + AI add-ons accordion
-- [x] Contact/lead form with SMS consent
-- [x] Magic link login page
-- [x] Dashboard home (plan status, quick actions)
-- [x] Billing page (opens Stripe Customer Portal)
-- [x] Settings page (profile + SMS opt-in)
-- [x] Mobile sticky nav
-- [x] Dark footer with trust badges
-- [ ] Portfolio / case studies page
-- [ ] Privacy policy + Terms of service pages
-- [ ] Testimonials / social proof section
-
-### Integrations (not yet wired)
-- [ ] SendGrid — welcome email on signup, billing receipts
-- [ ] Twilio — SMS opt-in confirmation, billing reminders
-- [ ] Make.com — webhook automation trigger from contact form
+### Still Needed
+- [ ] Add `SENDGRID_API_KEY`, `TWILIO_*`, `BUSINESS_OWNER_PHONE` to Vercel env vars
+- [ ] Connect `123smartmedia.com` domain in Vercel dashboard
+- [ ] Record Loom video and replace placeholder URL in `components/ExplainerVideo.tsx:89`
+- [ ] Add real OG image (`public/og-image.png`, 1200×630px)
+- [ ] Wire Make.com webhook (trigger on new `contact_submissions` row)
+- [ ] Test Stripe checkout end-to-end in live mode
+- [ ] Test magic link login + dashboard flow
 
 ---
 
 ## Known Issues / Notes
 
-- `export { getStripe as stripe }` in `lib/stripe/config.ts` exports a **function**, not an instance. All callers correctly use `getStripe()` directly. Do not use the `stripe` named export with dot notation (`stripe.checkout...`) — it will throw.
-- `lib/supabase.ts` exists as a legacy file alongside `lib/supabase/`. Not currently imported anywhere — safe to delete when cleaning up.
-- Dashboard pages use `force-dynamic` is not set — they rely on the layout server component auth guard. If pages are ever extracted to standalone routes, add `export const dynamic = 'force-dynamic'`.
-- Stripe plan tiers in code use `'starter' | 'growth' | 'elite'` but the DB schema in `project.md` shows `'starter' | 'growth' | 'pro'`. Code and live DB use `elite` — `project.md` is stale on this point.
+- `export { getStripe as stripe }` in `lib/stripe/config.ts` exports a **function**, not an instance. All callers use `getStripe()` directly. Never use the `stripe` named export with dot notation.
+- `lib/supabase.ts` legacy file exists alongside `lib/supabase/` — not imported anywhere, safe to delete.
+- Dashboard `force-dynamic` is handled by the layout auth guard. If any page is ever extracted to a standalone route, add `export const dynamic = 'force-dynamic'`.
+- ExplainerVideo Loom URL is a placeholder — video will not play until replaced.
 
 ---
 
 ## Pricing Reference
 
-| Plan | Monthly | Annual |
-|---|---|---|
-| Starter | $199/mo | $159/mo (billed annually) |
-| Growth | $349/mo | $279/mo |
-| Elite | $499/mo | $399/mo |
+| Plan | Monthly | Annual | Annual Savings |
+|---|---|---|---|
+| Starter | $199/mo | $159/mo | $480/yr |
+| Growth | $349/mo | $279/mo | $840/yr |
+| Elite | $499/mo | $399/mo | $1,200/yr |
 
-**AI Add-ons** (per month, add to any plan):
+**AI Add-ons:**
 | Add-on | Price |
 |---|---|
 | AI Chatbot | $49/mo |
@@ -210,3 +194,4 @@ Trigger: `handle_new_user()` — auto-creates `profiles` row on signup.
 | AI Receptionist | $79/mo |
 | Email Automation | $29/mo |
 | Social Automation | $49/mo |
+| Social Media Page Setup | $299 one-time |
